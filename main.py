@@ -34,31 +34,6 @@ def shift_coord(some_list, some_length):
             some_list[j + 1][i] = some_list[j][i]
 
 
-def add_block(s_list, length):
-    side_indicator = []
-    x1 = s_list[length - 1][0]
-    x2 = s_list[length - 2][0]
-    y1 = s_list[length - 1][1]
-    y2 = s_list[length - 2][1]
-
-    if y1 == y2 and (x2 - x1 == block_size or x2 - x1 == W):
-        side_indicator = [-1, 0]
-    elif y1 == y2 and (x1 - x2 == block_size or x1 - x2 == W):
-        side_indicator = [1, 0]
-    elif x1 == x2 and (y2 - y1 == block_size or y2 - y1 == H):
-        side_indicator = [0, -1]
-    elif x1 == x2 and (y1 - y2 == block_size or y1 - y2 == H):
-        side_indicator = [0, 1]
-
-    print(x1, y1, x2, y2)
-
-    s_list.append([s_list[length - 1][0] + side_indicator[0] * block_size,
-                   s_list[length - 1][1] + side_indicator[1] * block_size])
-
-    length += 1
-    return s_list, length
-
-
 x = None
 y = None
 is_moving = None
@@ -72,7 +47,7 @@ game_over = None
 
 
 def set_initial_parameters():
-    global x, y, is_moving,snake_list, snake_speed, snake_length, food_x, food_y, food_eaten, game_over
+    global x, y, is_moving,snake_list, snake_speed, snake_length, food_x, food_y, game_over
     x0 = 200
     y0 = 160
     x = x0
@@ -90,7 +65,6 @@ def set_initial_parameters():
     for i in range(snake_length):
         snake_list.append([x0 - i * block_size, y0])
 
-    food_eaten = False
     game_over = False
 
 
@@ -115,12 +89,6 @@ while run:
         screen.blit(my_font.render(str(snake_length - 4), True, cream_color), (270, 180))
         draw_text('Press R to restart', my_font, cream_color, 130, 250)
 
-    # eating food and removing next food to another place
-    if snake_list[0][0] == food_x and snake_list[0][1] == food_y:
-        food_eaten = True
-        food_x = randrange(0, W - block_size, block_size)
-        food_y = randrange(0, H - block_size, block_size)
-
     # collision with itself
     for i in range(snake_length - 3):
         if snake_list[0][0] == snake_list[i+3][0] and snake_list[0][1] == snake_list[i+3][1]:
@@ -136,11 +104,15 @@ while run:
     # moving of the snake
     else:
         # change_coord shifts coordinates of length - 1 elements and next row changes coordinates of the head
+        next_head_pos = [snake_list[0][0], snake_list[0][1]]
+        next_head_pos[is_moving['axis']] += is_moving['direction'] * snake_speed
+        if next_head_pos[0] == food_x and next_head_pos[1] == food_y:
+            snake_length += 1
+            snake_list.insert(0, [food_x, food_y])
+            food_x = randrange(0, W - block_size, block_size)
+            food_y = randrange(0, H - block_size, block_size)
         shift_coord(snake_list, snake_length)
         snake_list[0][is_moving['axis']] += is_moving['direction'] * snake_speed
-        if food_eaten:
-            snake_list, snake_length = add_block(snake_list, snake_length)
-            food_eaten = False
 
     # moving through the field sides
     if snake_list[0][0] == W:
