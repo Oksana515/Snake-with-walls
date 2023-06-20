@@ -34,6 +34,14 @@ def shift_coord(some_list, some_length):
             some_list[j + 1][i] = some_list[j][i]
 
 
+def increase_snake_n_moving_food(s_list, length, some_x, some_y):
+    length += 1
+    s_list.insert(0, [some_x, some_y])
+    some_x = randrange(0, W - block_size, block_size)
+    some_y = randrange(0, H - block_size, block_size)
+    return s_list, length, some_x, some_y
+
+
 x = None
 y = None
 is_moving = None
@@ -42,7 +50,6 @@ snake_length = None
 food_x = None
 food_y = None
 snake_list = None
-food_eaten = None
 game_over = None
 
 
@@ -57,8 +64,8 @@ def set_initial_parameters():
     # direction 0 - coordinate doesn't change
     is_moving = {'axis': 0, 'direction': 0}
     snake_speed = block_size
-    food_x = 400
-    food_y = 240
+    food_x = 380
+    food_y = 160
 
     snake_list = []
     snake_length = 4
@@ -97,20 +104,23 @@ while run:
 
     # initial moving of the snake
     if is_moving['direction'] == 0:
+        shift_coord(snake_list, snake_length)
+        snake_list[0][0] += snake_speed
+        if snake_list[0][0] == food_x - block_size and snake_list[0][1] == food_y:
+            snake_list, snake_length, food_x, food_y = increase_snake_n_moving_food(snake_list, snake_length, food_x, food_y)
         for i in range(snake_length):
-            snake_list[i][0] += snake_speed
             if snake_list[i][0] == W:
                 snake_list[i][0] = 0
     # moving of the snake
     else:
-        # change_coord shifts coordinates of length - 1 elements and next row changes coordinates of the head
+        # coordinates of a head on the next step
         next_head_pos = [snake_list[0][0], snake_list[0][1]]
         next_head_pos[is_moving['axis']] += is_moving['direction'] * snake_speed
+        # if head eats food on the next step, block with the food coordinates is added to the head of the snake
+        # and the food block is moved on it's next position
         if next_head_pos[0] == food_x and next_head_pos[1] == food_y:
-            snake_length += 1
-            snake_list.insert(0, [food_x, food_y])
-            food_x = randrange(0, W - block_size, block_size)
-            food_y = randrange(0, H - block_size, block_size)
+            snake_list, snake_length, food_x, food_y = increase_snake_n_moving_food(snake_list, snake_length, food_x, food_y)
+        # change_coord shifts coordinates of length - 1 elements and next row changes coordinates of the head
         shift_coord(snake_list, snake_length)
         snake_list[0][is_moving['axis']] += is_moving['direction'] * snake_speed
 
