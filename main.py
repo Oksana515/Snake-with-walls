@@ -50,11 +50,14 @@ snake_length = None
 food_x = None
 food_y = None
 snake_list = None
+game_paused = None
+pause_counter = None
 game_over = None
 
 
+
 def set_initial_parameters():
-    global x, y, is_moving,snake_list, snake_speed, snake_length, food_x, food_y, game_over
+    global x, y, is_moving,snake_list, snake_speed, snake_length, food_x, food_y, game_over, game_paused, pause_counter
     x0 = 200
     y0 = 160
     x = x0
@@ -64,14 +67,16 @@ def set_initial_parameters():
     # direction 0 - coordinate doesn't change
     is_moving = {'axis': 0, 'direction': 0}
     snake_speed = block_size
-    food_x = 380
-    food_y = 160
+    food_x = randrange(0, W - block_size, block_size)
+    food_y = randrange(0, H - block_size, block_size)
 
     snake_list = []
     snake_length = 4
     for i in range(snake_length):
         snake_list.append([x0 - i * block_size, y0])
 
+    game_paused = False
+    pause_counter = 0
     game_over = False
 
 
@@ -104,8 +109,9 @@ while run:
 
     # initial moving of the snake
     if is_moving['direction'] == 0:
-        shift_coord(snake_list, snake_length)
-        snake_list[0][0] += snake_speed
+        if not game_paused:
+            shift_coord(snake_list, snake_length)
+            snake_list[0][0] += snake_speed
         if snake_list[0][0] == food_x - block_size and snake_list[0][1] == food_y:
             snake_list, snake_length, food_x, food_y = increase_snake_n_moving_food(snake_list, snake_length, food_x, food_y)
         for i in range(snake_length):
@@ -121,8 +127,9 @@ while run:
         if next_head_pos[0] == food_x and next_head_pos[1] == food_y:
             snake_list, snake_length, food_x, food_y = increase_snake_n_moving_food(snake_list, snake_length, food_x, food_y)
         # change_coord shifts coordinates of length - 1 elements and next row changes coordinates of the head
-        shift_coord(snake_list, snake_length)
-        snake_list[0][is_moving['axis']] += is_moving['direction'] * snake_speed
+        if not game_paused:
+            shift_coord(snake_list, snake_length)
+            snake_list[0][is_moving['axis']] += is_moving['direction'] * snake_speed
 
     # moving through the field sides
     if snake_list[0][0] == W:
@@ -159,6 +166,12 @@ while run:
             # restart the game
             if event.key == pg.K_r and game_over:
                 set_initial_parameters()
+            if event.key == pg.K_p:
+                pause_counter += 1
+                if pause_counter % 2 == 0:
+                    game_paused = False
+                else:
+                    game_paused = True
 
     pg.display.flip()
 
