@@ -14,7 +14,7 @@ my_font = pg.font.SysFont(None, 30)
 
 block_size = 20
 
-block_img = pg.image.load('block_yellow.png')
+block_img = pg.image.load('block.png')
 block_img = pg.transform.scale(block_img, (block_size, block_size))
 
 
@@ -24,7 +24,7 @@ def draw_text(text, font, t_color, x_text, y_text):
 
 
 # define colors
-colours = {'bg': "#06172d", 'snake': "#dac049", 'score': "#a2b2b8"}
+colours = {'bg': "#3c2b2e", 'snake': "#eff1ed", 'score': "#f9e5d7"}
 
 
 def shift_coord(some_list, some_length):
@@ -34,10 +34,16 @@ def shift_coord(some_list, some_length):
 
 
 def increase_snake_n_moving_food(s_list, length, some_x, some_y):
+    # increasing snake
     length += 1
     s_list.insert(0, [some_x, some_y])
-    some_x = randrange(0, W - block_size, block_size)
-    some_y = randrange(0, H - block_size, block_size)
+    # moving food
+    while True:
+        some_x = randrange(0, W - block_size, block_size)
+        some_y = randrange(0, H - block_size, block_size)
+        if not [some_x, some_y] in s_list:
+            break
+
     return s_list, length, some_x, some_y
 
 
@@ -114,7 +120,7 @@ while run:
             snake_list[0][0] += snake_speed
             # moving through the field sides
             snake_list[0] = moving_through_the_field_size(snake_list[0])
-        if snake_list[0][0] == food_x - block_size and snake_list[0][1] == food_y:
+        if snake_list[0][0] == food_x and snake_list[0][1] == food_y:
             snake_list, snake_length, food_x, food_y = increase_snake_n_moving_food(snake_list, snake_length, food_x,
                                                                                     food_y)
         for i in range(snake_length):
@@ -162,23 +168,22 @@ while run:
         screen.blit(my_font.render(str(snake_length - 4), True, colours['score']), (270, 180))
         draw_text('Press R to restart', my_font, colours['snake'], 130, 250)
 
+    motion_keys = {
+        pg.K_DOWN: (1, 1),
+        pg.K_UP: (1, -1),
+        pg.K_RIGHT: (0, 1),
+        pg.K_LEFT: (0, -1)
+    }
+
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
         # defining keys
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_DOWN:
-                is_moving['axis'] = 1
-                is_moving['direction'] = 1
-            if event.key == pg.K_UP:
-                is_moving['axis'] = 1
-                is_moving['direction'] = -1
-            if event.key == pg.K_RIGHT:
-                is_moving['axis'] = 0
-                is_moving['direction'] = 1
-            if event.key == pg.K_LEFT:
-                is_moving['axis'] = 0
-                is_moving['direction'] = -1
+            if event.key in motion_keys:
+                if is_moving['axis'] != motion_keys[event.key][0]:  # snake can't go backwards
+                    is_moving['axis'] = motion_keys[event.key][0]
+                    is_moving['direction'] = motion_keys[event.key][1]
             # restart the game
             if event.key == pg.K_r and game_over:
                 set_initial_parameters()
@@ -190,6 +195,8 @@ while run:
                     game_paused = True
 
     pg.display.flip()
+
+
 
 
 
