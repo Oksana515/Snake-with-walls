@@ -17,14 +17,26 @@ block_size = 20
 block_img = pg.image.load('block.png')
 block_img = pg.transform.scale(block_img, (block_size, block_size))
 
+# define colors
+colours = {'bg': "#3c2b2e", 'snake': "#eff1ed", 'score': "#f9e5d7"}
+
 
 def draw_text(text, font, t_color, x_text, y_text):
     font_img = font.render(text, True, t_color)
     screen.blit(font_img, (x_text, y_text))
 
 
-# define colors
-colours = {'bg': "#3c2b2e", 'snake': "#eff1ed", 'score': "#f9e5d7"}
+def read_from_file(file_name):
+    some_file = open(file_name, "r")
+    file_content = some_file.read()
+    some_file.close()
+    return file_content
+
+
+def write_to_file(file_name, file_content):
+    some_file = open(file_name, "w")
+    some_file.write(file_content)
+    some_file.close()
 
 
 def shift_coord(some_list, some_length):
@@ -107,11 +119,15 @@ while run:
     screen.fill(colours['bg'])
 
     # displaying score and level number
-    pg.draw.rect(screen, colours['score'], pg.Rect(0, 420, W, 100))
-    draw_text('Level 1', my_font, colours['bg'], 40, 440)
-    draw_text('Pause: P', my_font, colours['bg'], 300, 440)
-    draw_text('Your score =', my_font, colours['bg'], 40, 480)
-    screen.blit(my_font.render(str(snake_length - 4), True, colours['bg']), (170, 480))
+    if not game_over:
+        pg.draw.rect(screen, colours['score'], pg.Rect(0, 420, W, 100))
+        draw_text('Level 1', my_font, colours['bg'], 40, 440)
+        draw_text('Pause: P', my_font, colours['bg'], 245, 440)
+        draw_text('Your score =', my_font, colours['bg'], 40, 480)
+        screen.blit(my_font.render(str(snake_length - 4), True, colours['bg']), (170, 480))
+        h = read_from_file("hs.txt")
+        draw_text('Highscore:', my_font, colours['bg'], 245, 480)
+        screen.blit(my_font.render(h, True, colours['bg']), (355, 480))
 
     # initial moving of the snake
     if is_moving['direction'] == 0:
@@ -163,10 +179,18 @@ while run:
 
     # displaying score at the end of a game
     if game_over:
-        draw_text('Game Over', my_font, colours['score'], 160, 130)
-        draw_text('Your score =', my_font, colours['score'], 140, 180)
-        screen.blit(my_font.render(str(snake_length - 4), True, colours['score']), (270, 180))
-        draw_text('Press R to restart', my_font, colours['snake'], 130, 250)
+        h = read_from_file("hs.txt")
+
+        if snake_length - 4 >= int(h):
+            write_to_file("hs.txt", str(snake_length - 4))
+
+        h = read_from_file("hs.txt")
+        draw_text('Highscore:', my_font, colours['score'], 140, 240)
+        screen.blit(my_font.render(h, True, colours['score']), (270, 240))
+        draw_text('Game Over', my_font, colours['score'], 160, 100)
+        draw_text('Your score:', my_font, colours['score'], 140, 200)
+        screen.blit(my_font.render(str(snake_length - 4), True, colours['score']), (270, 200))
+        draw_text('Press R to restart', my_font, colours['snake'], 130, 380)
 
     motion_keys = {
         pg.K_DOWN: (1, 1),
