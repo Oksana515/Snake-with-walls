@@ -59,6 +59,25 @@ def increase_snake_n_moving_food(s_list, length, some_x, some_y):
     return s_list, length, some_x, some_y
 
 
+def increase_snake(s_list, length, some_x, some_y):
+    # increasing snake
+    length += 1
+    s_list.insert(0, [some_x, some_y])
+
+    return s_list, length
+
+
+def place_food(s_list, some_x, some_y):
+    # moving food
+    while True:
+        some_x = randrange(0, W - block_size, block_size)
+        some_y = randrange(0, H - block_size, block_size)
+        if not [some_x, some_y] in s_list and not [some_x, some_y] in walls_coordinates:
+            break
+
+    return some_x, some_y
+
+
 def moving_through_the_field_size(some_coords):
     if some_coords[0] == W:
         some_coords[0] = 0
@@ -73,15 +92,23 @@ def moving_through_the_field_size(some_coords):
 
 walls_coordinates = []
 
-with open('level.txt', mode='r') as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    line_count = 0
-    for row in csv_reader:
-        if line_count == 0:
-            line_count += 1
-        else:
-            walls_coordinates.append([int(row[0]), int(row[1])])
-            line_count += 1
+
+def read_from_level_file(file_name):
+    global walls_coordinates
+    walls_coordinates = []
+    with open(file_name, mode='r') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                line_count += 1
+            else:
+                walls_coordinates.append([int(row[0]), int(row[1])])
+                line_count += 1
+
+
+level_number = 0
+read_from_level_file(f'level{level_number}.txt')
 
 
 def draw_walls():
@@ -113,13 +140,13 @@ def set_initial_parameters():
     # direction 0 - coordinate doesn't change
     is_moving = {'axis': 0, 'direction': 0}
     snake_speed = block_size
-    food_x = randrange(0, W - block_size, block_size)
-    food_y = randrange(0, H - block_size, block_size)
 
     snake_list = []
     snake_length = 4
     for i in range(snake_length):
         snake_list.append([x0 - i * block_size, y0])
+
+    food_x, food_y = place_food(snake_list, food_x, food_y)
 
     game_paused = False
     pause_counter = 0
@@ -161,9 +188,12 @@ while run:
 
             # moving through the field sides
             snake_list[0] = moving_through_the_field_size(snake_list[0])
+
         if snake_list[0][0] == food_x and snake_list[0][1] == food_y:
-            snake_list, snake_length, food_x, food_y = increase_snake_n_moving_food(snake_list, snake_length, food_x,
-                                                                                    food_y)
+            # increasing the snake
+            snake_list, snake_length = increase_snake(snake_list, snake_length, food_x, food_y)
+            # moving food to a new position
+            food_x, food_y = place_food(snake_list, food_x, food_y)
         for i in range(snake_length):
             if snake_list[i][0] == W:
                 snake_list[i][0] = 0
@@ -185,8 +215,13 @@ while run:
         # if head eats food on the next step, block with the food coordinates is added to the head of the snake
         # and the food block is moved on it's next position
         if next_head_pos[0] == food_x and next_head_pos[1] == food_y:
-            snake_list, snake_length, food_x, food_y = increase_snake_n_moving_food(snake_list, snake_length, food_x,
-                                                                                    food_y)
+            # increasing the snake
+            snake_list, snake_length = increase_snake(snake_list, snake_length, food_x, food_y)
+            # moving food to a new position
+            food_x, food_y = place_food(snake_list, food_x, food_y)
+            # snake_list, snake_length, food_x, food_y = increase_snake_n_moving_food(snake_list, snake_length, food_x,
+            #                                                                         food_y)
+
         # change_coord shifts coordinates of length - 1 elements and next row changes coordinates of the head
         if not game_paused:
             shift_coord(snake_list, snake_length)
