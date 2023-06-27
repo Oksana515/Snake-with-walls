@@ -1,21 +1,21 @@
 import pygame as pg
 from random import randrange
+from parameters import W, H, block_size
+import csv
 
 pg.init()
 
 clock = pg.time.Clock()
 
-W = 420
-H = 420
 screen = pg.display.set_mode((W, H + 100))
 pg.display.set_caption('Snake')
 
 my_font = pg.font.SysFont(None, 30)
 
-block_size = 20
-
 block_img = pg.image.load('block.png')
 block_img = pg.transform.scale(block_img, (block_size, block_size))
+wall_img = pg.image.load('wall_block.png')
+wall_img = pg.transform.scale(wall_img, (block_size, block_size))
 
 # define colors
 colours = {'bg': "#3c2b2e", 'snake': "#eff1ed", 'score': "#f9e5d7"}
@@ -53,7 +53,7 @@ def increase_snake_n_moving_food(s_list, length, some_x, some_y):
     while True:
         some_x = randrange(0, W - block_size, block_size)
         some_y = randrange(0, H - block_size, block_size)
-        if not [some_x, some_y] in s_list:
+        if not [some_x, some_y] in s_list and not [some_x, some_y] in walls_coordinates:
             break
 
     return s_list, length, some_x, some_y
@@ -69,6 +69,24 @@ def moving_through_the_field_size(some_coords):
     elif some_coords[1] == H:
         some_coords[1] = 0
     return some_coords
+
+
+walls_coordinates = []
+
+with open('level.txt', mode='r') as csv_file:
+    csv_reader = csv.reader(csv_file, delimiter=',')
+    line_count = 0
+    for row in csv_reader:
+        if line_count == 0:
+            line_count += 1
+        else:
+            walls_coordinates.append([int(row[0]), int(row[1])])
+            line_count += 1
+
+
+def draw_walls():
+    for coordinates in walls_coordinates:
+        screen.blit(wall_img, coordinates)
 
 
 x = None
@@ -120,6 +138,7 @@ while run:
 
     # displaying score and level number
     if not game_over:
+        draw_walls()
         pg.draw.rect(screen, colours['score'], pg.Rect(0, 420, W, 100))
         draw_text('Level 1', my_font, colours['bg'], 40, 440)
         draw_text('Pause: P', my_font, colours['bg'], 245, 440)
@@ -134,6 +153,12 @@ while run:
         if not game_paused:
             shift_coord(snake_list, snake_length)
             snake_list[0][0] += snake_speed
+
+            # collision with the wall
+            if [snake_list[0][0], snake_list[0][1]] in walls_coordinates:
+                snake_speed = 0
+                game_over = True
+
             # moving through the field sides
             snake_list[0] = moving_through_the_field_size(snake_list[0])
         if snake_list[0][0] == food_x and snake_list[0][1] == food_y:
@@ -142,13 +167,21 @@ while run:
         for i in range(snake_length):
             if snake_list[i][0] == W:
                 snake_list[i][0] = 0
+
     # moving of the snake
     else:
         # coordinates of a head on the next step
         next_head_pos = [snake_list[0][0], snake_list[0][1]]
         next_head_pos[is_moving['axis']] += is_moving['direction'] * snake_speed
+
         # moving through the field sides
         next_head_pos = moving_through_the_field_size(next_head_pos)
+
+        # collision with the wall
+        if [next_head_pos[0], next_head_pos[1]] in walls_coordinates:
+            snake_speed = 0
+            game_over = True
+
         # if head eats food on the next step, block with the food coordinates is added to the head of the snake
         # and the food block is moved on it's next position
         if next_head_pos[0] == food_x and next_head_pos[1] == food_y:
