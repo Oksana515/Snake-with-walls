@@ -7,6 +7,8 @@ pg.init()
 
 clock = pg.time.Clock()
 
+my_score = 0
+
 screen = pg.display.set_mode((W, H + 100))
 pg.display.set_caption('Snake')
 
@@ -39,43 +41,21 @@ def write_to_file(file_name, file_content):
     some_file.close()
 
 
+# snake section
 def shift_coord(some_list, some_length):
     for j in reversed(range(some_length - 1)):
         for i in range(2):
             some_list[j + 1][i] = some_list[j][i]
 
 
-def increase_snake_n_moving_food(s_list, length, some_x, some_y):
-    # increasing snake
-    length += 1
-    s_list.insert(0, [some_x, some_y])
-    # moving food
-    while True:
-        some_x = randrange(0, W - block_size, block_size)
-        some_y = randrange(0, H - block_size, block_size)
-        if not [some_x, some_y] in s_list and not [some_x, some_y] in walls_coordinates:
-            break
-
-    return s_list, length, some_x, some_y
-
-
 def increase_snake(s_list, length, some_x, some_y):
+    global my_score
     # increasing snake
     length += 1
+    my_score += 1
     s_list.insert(0, [some_x, some_y])
 
     return s_list, length
-
-
-def place_food(s_list, some_x, some_y):
-    # moving food
-    while True:
-        some_x = randrange(0, W - block_size, block_size)
-        some_y = randrange(0, H - block_size, block_size)
-        if not [some_x, some_y] in s_list and not [some_x, some_y] in walls_coordinates:
-            break
-
-    return some_x, some_y
 
 
 def moving_through_the_field_size(some_coords):
@@ -90,6 +70,20 @@ def moving_through_the_field_size(some_coords):
     return some_coords
 
 
+# food section
+def place_food(s_list, some_x, some_y):
+    global walls_coordinates
+    # moving food
+    while True:
+        some_x = randrange(0, W - block_size, block_size)
+        some_y = randrange(0, H - block_size, block_size)
+        if not [some_x, some_y] in s_list and not [some_x, some_y] in walls_coordinates:
+            break
+
+    return some_x, some_y
+
+
+# wall section
 walls_coordinates = []
 
 
@@ -107,7 +101,7 @@ def read_from_level_file(file_name):
                 line_count += 1
 
 
-level_number = 0
+level_number = 1
 read_from_level_file(f'level{level_number}.txt')
 
 
@@ -116,6 +110,7 @@ def draw_walls():
         screen.blit(wall_img, coordinates)
 
 
+# initial parameters section
 x = None
 y = None
 is_moving = None
@@ -131,8 +126,8 @@ game_over = None
 
 def set_initial_parameters():
     global x, y, is_moving,snake_list, snake_speed, snake_length, food_x, food_y, game_over, game_paused, pause_counter
-    x0 = 200
-    y0 = 160
+    x0 = 60
+    y0 = 180
     x = x0
     y = y0
     # in is_moving axis 0 - x axis, axis 1 - y axis,
@@ -167,10 +162,11 @@ while run:
     if not game_over:
         draw_walls()
         pg.draw.rect(screen, colours['score'], pg.Rect(0, 420, W, 100))
-        draw_text('Level 1', my_font, colours['bg'], 40, 440)
+        draw_text('Level', my_font, colours['bg'], 40, 440)
+        screen.blit(my_font.render(str(level_number), True, colours['bg']), (100, 440))
         draw_text('Pause: P', my_font, colours['bg'], 245, 440)
         draw_text('Your score =', my_font, colours['bg'], 40, 480)
-        screen.blit(my_font.render(str(snake_length - 4), True, colours['bg']), (170, 480))
+        screen.blit(my_font.render(str(my_score), True, colours['bg']), (170, 480))
         h = read_from_file("hs.txt")
         draw_text('Highscore:', my_font, colours['bg'], 245, 480)
         screen.blit(my_font.render(h, True, colours['bg']), (355, 480))
@@ -249,7 +245,7 @@ while run:
     if game_over:
         h = read_from_file("hs.txt")
 
-        if snake_length - 4 >= int(h):
+        if my_score >= int(h):
             write_to_file("hs.txt", str(snake_length - 4))
 
         h = read_from_file("hs.txt")
@@ -257,7 +253,7 @@ while run:
         screen.blit(my_font.render(h, True, colours['score']), (270, 240))
         draw_text('Game Over', my_font, colours['score'], 160, 100)
         draw_text('Your score:', my_font, colours['score'], 140, 200)
-        screen.blit(my_font.render(str(snake_length - 4), True, colours['score']), (270, 200))
+        screen.blit(my_font.render(str(my_score), True, colours['score']), (270, 200))
         draw_text('Press R to restart', my_font, colours['snake'], 130, 380)
 
     motion_keys = {
@@ -279,6 +275,7 @@ while run:
             # restart the game
             if event.key == pg.K_r and game_over:
                 set_initial_parameters()
+                my_score = 0
             if event.key == pg.K_p:
                 pause_counter += 1
                 if pause_counter % 2 == 0:
